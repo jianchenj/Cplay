@@ -9,6 +9,7 @@
 struct CData {
     unsigned char* data = 0;
     int size = 0;
+    bool isAudio = false;
     void drop();
 };
 

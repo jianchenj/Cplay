@@ -32,6 +32,8 @@ bool FFDemux::Open(const char *url) {
     }
     this->totalMs = ic->duration / (AV_TIME_BASE / 1000);//这个值不一定有，有的参数是存在stream里的
     CLOGI("FFDemux :: <Open> totalMs = %d", totalMs);
+    GetAPara();
+    GetVPara();
     return true;
 }
 
@@ -49,6 +51,15 @@ CData FFDemux::Read() {
     //CLOGI("FFDemux :: <Read> pack size : %d, pts %lld", pkt->size, pkt->pts);
     d.data = (unsigned char *) pkt;
     d.size = pkt->size;
+    if (pkt->stream_index == audioStream) {
+        d.isAudio = true;
+    } else if (pkt->stream_index == videoStream) {
+        d.isAudio = false;
+    } else {
+        //每次中途return的时候，要注意有没有空间没有释放
+        av_packet_free(&pkt);
+        return CData();
+    }
     return d;
 }
 
@@ -71,17 +82,34 @@ FFDemux::FFDemux() {//构造函数
     }
 }
 
-CParameter FFDemux::GetPara() {
-    CLOGI("********* FFDemux <GetPara> ********");
+CParameter FFDemux::GetVPara() {
+    CLOGI("********* FFDemux <GetVPara> ********");
     if (!ic) {
         return CParameter();
     }
     //获取视频流索引
     int re = av_find_best_stream(ic, AVMEDIA_TYPE_VIDEO, -1, -1, 0, 0);
     if (re < 0) {
-        CLOGI("FFDemux:: <GetPara> av_find_best_stream failed");
+        CLOGI("FFDemux:: <GetVPara> av_find_best_stream failed");
         return CParameter();
     }
+    videoStream = re;
+    CParameter para;
+    para.para = ic->streams[re]->codecpar;
+    return para;
+}
+
+CParameter FFDemux::GetAPara() {
+    CLOGI("********* FFDemux <GetAPara> ********");
+    if (!ic) {
+        return CParameter();
+    }
+    int re = av_find_best_stream(ic, AVMEDIA_TYPE_AUDIO, -1, -1, 0, 0);
+    if (re < 0) {
+        CLOGI("FFDemux:: <GetAPara> av_find_best_stream failed");
+        return CParameter();
+    }
+    audioStream = re;
     CParameter para;
     para.para = ic->streams[re]->codecpar;
     return para;

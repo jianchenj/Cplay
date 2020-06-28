@@ -46,7 +46,12 @@ add_library( # Sets the name of the library.
         IObserver.cpp
         IDecode.cpp
         FFDecode.cpp
-        CParameter.cpp)
+        CParameter.cpp
+        IVideoView.cpp
+        GLVideoView.cpp
+        CTexture.cpp
+        CEGL.cpp
+        CShader.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

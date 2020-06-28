@@ -8,7 +8,9 @@
 
 #include "CData.h"
 #include "IDemux.h"
+
 struct AVFormatContext;
+
 class FFDemux : public IDemux {
 public:
     //打开文件 or 流媒体  rtmp http rtsp
@@ -18,12 +20,17 @@ public:
     virtual CData Read();
 
     //获取视频参数
-    virtual CParameter GetPara();
+    virtual CParameter GetVPara();
+
+    //获取音频参数
+    virtual CParameter GetAPara();
 
     FFDemux();
 
 private:
     AVFormatContext *ic = 0;
+    int audioStream = 1;
+    int videoStream = 0;
 };
 
 

@@ -26,7 +26,7 @@ bool FFDecode::Open(CParameter para) {
     //2.创建解码上下文, 并复制参数
     codec = avcodec_alloc_context3(cd);
     avcodec_parameters_to_context(codec, p);
-
+    codec->thread_count = 8;//多线程解码
     //3.打开解码器
     int re = avcodec_open2(codec, 0, 0);
     if (re != 0) {
@@ -34,6 +34,7 @@ bool FFDecode::Open(CParameter para) {
         av_strerror(re, buff, sizeof(buff) - 1);
         return false;
     }
+    isAudio = !(codec->codec_type == AVMEDIA_TYPE_VIDEO);
     CLOGI("********** IDecode:: <Open> success! *************");
     return true;
 }
@@ -45,10 +46,32 @@ bool FFDecode::sendPacket(CData pkt) {
     if (!codec) {
         return false;
     }
-    int re = avcodec_send_packet(codec, (AVPacket *) pkt.data);
-    return true;
+    return avcodec_send_packet(codec, (AVPacket *) pkt.data) == 0;
+
 }
 
 CData FFDecode::RecvFrame() {
+    if (!codec) return CData();
+    if (!frame) {
+        frame = av_frame_alloc();
+    }
+    int re = avcodec_receive_frame(codec, frame);
+    if (re != 0) {
+        return CData();//解码失败
+    }
+
+    CData d;
+    d.data = (unsigned char *) frame;
+    if (codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+        //前提这是个yuv视频, Y, U , V 平面格式三路行的大小，乘以高度 就是视频帧大小, linesize本身8位最多
+        d.size = (frame->linesize[0] + frame->linesize[1] + frame->linesize[2]) * frame->height;
+        d.isAudio = false;
+        return d;
+    } else if (codec->codec_type == AVMEDIA_TYPE_AUDIO) {
+        // 样本字节数* 单通道样本数 * 通道数
+        d.size = av_get_bytes_per_sample((AVSampleFormat) frame->format) * frame->nb_samples * 2;
+        d.isAudio = true;
+        return d;
+    }
     return CData();
 }

@@ -17,7 +17,10 @@ public:
     virtual bool Open(const char *url) = 0;
 
     //获取视频参数
-    virtual CParameter GetPara()  = 0;
+    virtual CParameter GetVPara()  = 0;
+
+    //获取音频参数
+    virtual CParameter GetAPara() = 0;
 
     //读取一帧数据，数据由调用者清理
     virtual CData Read() = 0;

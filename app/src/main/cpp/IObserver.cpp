@@ -3,6 +3,7 @@
 //
 
 #include "IObserver.h"
+#include "CLog.h"
 
 void IObserver::AddObs(IObserver *observer) {
     if (!observer) return;
